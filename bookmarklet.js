@@ -74,6 +74,7 @@
       for (let j = 0; j < array[i].length; j++) {
         if (line != '') { line += opt.delimiter; }
         if (array[i][j].match(/,/)) {
+          console.log('i:', i, 'j:', j); // Add this line to check the values of i and j
           line += `"${array[i][j]}"`;
         } else {
           line += array[i][j];
