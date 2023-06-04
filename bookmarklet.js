@@ -65,25 +65,23 @@
       newline: '\n'
     };
     const opt = config || defaults;
-    const array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    const arr = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
     let str = '';
 
-    for (let i = 0; i < array.length; i++) {
+    for (let i = 0; i < arr.length; i++) {
       let line = '';
 
-      for (let j = 0; j < array[i].length; j++) {
+      for (let j = 0; j < arr[i].length; j++) {
         if (line != '') { line += opt.delimiter; }
-        console.log(array[i][j])
-        if (array[i][j].match(/,/)) {
-          console.log('i:', i, 'j:', j); // Add this line to check the values of i and j
-          line += `"${array[i][j]}"`;
+        if (arr[i][j].match(/,/)) {
+          line += `"${arr[i][j]}"`;
         } else {
-          line += array[i][j];
+          line += arr[i][j];
         }
 
       }
 
-      if (i === array.length - 1) {
+      if (i === arr.length - 1) {
         str += line;
       } else {
         str += line + opt.newline;
@@ -296,64 +294,78 @@
   }
 
   function extractSecurityDescriptionTable(secDesTableData, params) {
-    const issuerName = params.issuerName;
-    const insiderName = params.insiderName;
-    const insiderRelationship = params.insiderRelationship;
-    const ceasedToBeInsider = params.ceasedToBeInsider;
-  
+
+    const issuerName = params.issuerName,
+      insiderName = params.insiderName,
+      insiderRelationship = params.insiderRelationship,
+      ceasedToBeInsider = params.ceasedToBeInsider;
+
     let securityDesignation;
-  
+
     const secDesTableRemoveIndices = [];
-  
-    secDesTableData.forEach((row, i) => {
-      const str = row.textContent.trim().replace(/\s+/g, ' ');
-      const strClean = str.replace(/.+:\s/, '');
-      if (securityDesignationRegex.test(str)) {
-        securityDesignation = strClean;
-        secDesTableRemoveIndices.push(i);
-      }
-    });
-  
-    const generalRemarks = [];
-    const secDesTable = secDesTableData.filter((row, i) => {
-      const isGeneralRemark = generalRemarksRegex.test(row.textContent.trim().replace(/\s+/g, ' '));
-      if (isGeneralRemark) {
-        const remark = row.textContent.trim().replace(generalRemarksRegex, '').trim();
-        generalRemarks.push(remark);
-      }
-      return !isGeneralRemark && secDesTableRemoveIndices.indexOf(i) === -1;
-    });
-  
-    secDesTable.forEach(row => {
-      const rowData = template.slice();
-      const td = Array.from(row.querySelectorAll('td')).map(d => d.textContent.trim());
-  
-      rowData[0] = pageType === 'issuer' ? issuerName : insiderName;
-      rowData[1] = pageType === 'issuer' ? insiderName : issuerName;
-      rowData[2] = insiderRelationship;
-      rowData[3] = ceasedToBeInsider;
-      rowData[4] = securityDesignation;
-  
-      let tdSkip = 0;
-  
-      for (let j = 5; j < rowData.length; j++) {
-        if ([6, 17, 21].indexOf(j) > -1) {
-          tdSkip++;
+
+    secDesTableData
+      .map((row, i) => {
+        const str = row.textContent.trim().replace(/\s+/g, ' '),
+          strClean = str.replace(/.+:\s/, '');
+        switch (true) {
+          case securityDesignationRegex.test(str):
+            securityDesignation = strClean;
+            secDesTableRemoveIndices.push(i);
+            break;
         }
-        const tdIndex = j - 3 + tdSkip;
-        rowData[j] = td[tdIndex];
-      }
-  
-      if (hasRemarks) {
-        rowData[rowData.length - 1] = generalRemarks.shift() || '';
-      }
-  
-      finalData.push(rowData);
-    });
-  
+      });
+
+    const generalRemarks = secDesTableData
+      .map(row => {
+        const str = row.textContent.trim().replace(/\s+/g, ' '),
+          strClean = str.replace(/.+:/, '').trim();
+        switch (true) {
+          case generalRemarksRegex.test(str):
+            return strClean;
+        }
+      })
+      .filter(d => d !== undefined);
+
+    secDesTable = secDesTableData
+      .filter((row, i) => secDesTableRemoveIndices.indexOf(i) === -1)
+      .filter(row => !generalRemarksRegex.test(row.textContent.trim().replace(/\s+/g, ' ')))
+      .map((row, i) => {
+
+        const rowData = template.slice();
+
+        const td = Array.from(row.querySelectorAll('tr td'))
+          .map(d => d.textContent.trim());
+
+        // if "insider"-mode report, flip row data order
+
+        rowData[0] = pageType === 'issuer' ? issuerName : insiderName;
+        rowData[1] = pageType === 'issuer' ? insiderName : issuerName;
+
+        rowData[2] = insiderRelationship;
+        rowData[3] = ceasedToBeInsider;
+        rowData[4] = securityDesignation;
+
+        let tdSkip = 0;
+
+        for (var j = 5; j < rowData.length; j++) {
+          // td[3], td[15] and td[20] are seemingly always empty, likely spacers,
+          // so let's skip them and adjust the count accordingly
+          if ([6, 17, 21].indexOf(j) > -1) tdSkip++;
+          const tdIndex = j - 3 + tdSkip;
+          rowData[j] = td[tdIndex]
+          // console.log(`rowData[${i}] equals td[${tdIndex}]`);
+        }
+
+        if (hasRemarks) rowData[rowData.length - 1] = generalRemarks[i]; // adds remarks if applicable
+
+        finalData.push(rowData);
+
+      });
+
     finalData.push(template.slice().fill(' '));
+
   }
-  
 
   function extractDateRange() {
     const monthFrom = (parseInt(document.querySelector('input[name="MONTH_FROM_PUBLIC"]').value) + 1).toString(),
