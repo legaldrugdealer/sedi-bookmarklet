@@ -59,34 +59,27 @@
 
   anchor.click();
 
-  function jsonToCSV(objArray, config) {
+function jsonToCSV(objArray, config) {
     const defaults = {
       delimiter: ',',
       newline: '\n'
     };
     const opt = config || defaults;
-    const arr = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    let arr = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
     let str = '';
 
-    for (let i = 0; i < arr.length; i++) {
-      let line = '';
-
-      for (let j = 0; j < arr[i].length; j++) {
-        if (line != '') { line += opt.delimiter; }
-        if (arr[i][j].match(/,/)) {
-          line += `"${arr[i][j]}"`;
-        } else {
-          line += arr[i][j];
+    for (var i = 0; i < arr.length; i++) {
+        var line = '';
+        for (var j = 0; j < arr[i].length; j++) {
+          if (i === 0) {
+            line += '"' + arr[i][j].replace(/"/g, '""') + '",';
+          } else {
+            line += '"' + (arr[i][j] ? arr[i][j].replace(/"/g, '""') : '') + '",';
+          }
         }
-
-      }
-
-      if (i === arr.length - 1) {
-        str += line;
-      } else {
-        str += line + opt.newline;
-      }
+        str += line.slice(0, -1) + '\r\n';
     }
+
     return str;
   }
 
