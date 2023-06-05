@@ -65,7 +65,7 @@
       newline: '\n'
     };
     const opt = config || defaults;
-    let arr = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    let arr = typeof objArray != 'object' ? string(JSON.parse(objArray)) : string(objArray);
     let str = '';
 
     
