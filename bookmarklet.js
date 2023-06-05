@@ -58,7 +58,7 @@
   anchor.setAttribute('download', constructFilename());
 
   anchor.click();
-
+  
   function jsonToCSV(objArray, config) {
     const defaults = {
       delimiter: ',',
@@ -68,20 +68,21 @@
     let arr = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
     let str = '';
 
-    if (arr !== undefined && arr !== null) {
-        for (var i = 0; i < arr.length; i++) {
-            var line = '';
-            for (var j = 0; j < arr[i].length; j++) {
-              if (i === 0) {
-                line += '"' + arr[i][j].replace(/"/g, '""') + '",';
-              } else {
-                line += '"' + (arr[i][j] ? arr[i][j].replace(/"/g, '""') : '') + '",';
-              }
-            }
-            str += line.slice(0, -1) + '\r\n';
-        }
-    }
     
+    for (var i = 0; i < arr.length; i++) {
+        var line = '';
+        for (var j = 0; j < arr[i].length; j++) {
+            if (arr !== undefined && arr !== null) {
+                if (i === 0) {
+                    line += '"' + arr[i][j].replace(/"/g, '""') + '",';
+                  } else {
+                    line += '"' + (arr[i][j] ? arr[i][j].replace(/"/g, '""') : '') + '",';
+                  }
+            }
+        }
+        str += line.slice(0, -1) + '\r\n';
+    }
+
     return str;
   }
 
