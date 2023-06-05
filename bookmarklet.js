@@ -65,24 +65,28 @@
       newline: '\n'
     };
     const opt = config || defaults;
-    let arr = typeof objArray != 'object' ? string(JSON.parse(objArray)) : string(objArray);
+    const array = typeof objArray != 'object' ? string(JSON.parse(objArray)) : string(objArray);
     let str = '';
 
-    
-    for (var i = 0; i < arr.length; i++) {
-        var line = '';
-        for (var j = 0; j < arr[i].length; j++) {
-            if (arr !== undefined && arr !== null) {
-                if (i === 0) {
-                    line += '"' + arr[i][j].replace(/"/g, '""') + '",';
-                  } else {
-                    line += '"' + (arr[i][j] ? arr[i][j].replace(/"/g, '""') : '') + '",';
-                  }
-            }
-        }
-        str += line.slice(0, -1) + '\r\n';
-    }
+    for (let i = 0; i < array.length; i++) {
+      let line = '';
 
+      for (let j = 0; j < array[i].length; j++) {
+        if (line != '') { line += opt.delimiter; }
+        if (array[i][j].match(/,/)) {
+          line += `"${array[i][j]}"`;
+        } else {
+          line += array[i][j];
+        }
+
+      }
+
+      if (i === array.length - 1) {
+        str += line;
+      } else {
+        str += line + opt.newline;
+      }
+    }
     return str;
   }
 
